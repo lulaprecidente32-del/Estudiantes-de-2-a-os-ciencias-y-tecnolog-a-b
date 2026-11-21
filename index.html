@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50 overflow-x-hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Buscador de Estudiantes - 2do Año Cs. y Tecnología B</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        sanz: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html, body {
+            max-width: 100vw;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        @keyframes pulseHighlight {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.6); }
+            50% { transform: scale(1.01); box-shadow: 0 0 0 10px rgba(2, 132, 199, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(2, 132, 199, 0); }
+        }
+        .highlight-card {
+            animation: pulseHighlight 1.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col font-sans text-slate-800 antialiased selection:bg-sanz-500 selection:text-white bg-slate-50">
+
+    <!-- Notificación Flotante / Toast (Para evitar alert()) -->
+    <div id="toastNotification" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none w-[90%] max-w-md">
+        <div class="bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700/60 backdrop-blur-md flex items-center justify-between space-x-3 text-xs sm:text-sm">
+            <div class="flex items-center space-x-2.5 min-w-0">
+                <div class="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <span id="toastMessage" class="truncate font-medium">Notificación</span>
+            </div>
+            <button onclick="hideToast()" class="text-slate-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Header Principal Adaptado -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-20">
+                
+                <!-- Logo & Nombre de la Institución -->
+                <div class="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+                    <div class="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-sanz-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sanz-500/20 shrink-0">
+                        <i class="fa-solid fa-graduation-cap text-base sm:text-2xl"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h1 class="font-extrabold text-slate-900 text-xs sm:text-base leading-tight truncate">C.E. "Miguel José Sanz"</h1>
+                        <p class="text-[10px] sm:text-xs text-sanz-600 font-semibold flex items-center gap-1 leading-tight truncate">
+                            <span>2do. Año Cs. y Tecnología "B"</span>
+                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Insignia Profesor Orientador -->
+                <div class="flex items-center space-x-2 bg-slate-100 text-slate-700 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200/80 text-[11px] sm:text-xs shrink-0">
+                    <i class="fa-solid fa-user-tie text-sanz-600"></i>
+                    <div class="hidden xs:block sm:block text-left">
+                        <span class="text-[9px] uppercase text-slate-400 font-bold block leading-none">Prof. Orientador</span>
+                        <span class="font-bold text-slate-800 leading-tight">Félix Brito</span>
+                    </div>
+                    <span class="font-bold text-slate-800 xs:hidden">Félix B.</span>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8">
+
+        <!-- Banner de Búsqueda Móvil Optimizado -->
+        <section class="bg-gradient-to-br from-slate-900 via-sanz-900 to-indigo-950 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xl relative overflow-hidden border border-slate-800">
+            <!-- Efectos de luz de fondo -->
+            <div class="absolute -right-16 -bottom-16 w-60 h-60 bg-sanz-500/20 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -left-16 -top-16 w-60 h-60 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="max-w-3xl mx-auto text-center space-y-3.5 sm:space-y-5 relative z-10">
+                
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-white/10 text-sanz-100 border border-white/15 backdrop-blur-sm">
+                    <i class="fa-solid fa-database text-amber-400"></i>
+                    <span>34 Estudiantes Registrados</span>
+                </div>
+
+                <h2 class="text-xl sm:text-3xl font-black tracking-tight leading-snug">
+                    Consulta las características y datos de cada estudiante
+                </h2>
+                
+                <p class="text-slate-300 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
+                    Ingresa el <strong>nombre, apellido o cédula</strong> para conocer la estatura, peso, edad, sexo y tallas de uniforme escolar.
+                </p>
+
+                <!-- Campo de Búsqueda Adaptado para Celular -->
+                <div class="relative max-w-2xl mx-auto mt-2 text-slate-800">
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm sm:text-base"></i>
+                            <input 
+                                type="text" 
+                                id="searchInput"
+                                placeholder="Escribe un nombre o cédula (ej. Mathias, V 34822433)..."
+                                autocomplete="off"
+                                class="w-full pl-10 pr-9 py-3 sm:py-3.5 bg-white text-slate-900 placeholder-slate-400 text-xs sm:text-sm rounded-xl sm:rounded-2xl shadow-lg border-2 border-transparent focus:border-sanz-500 focus:outline-none transition"
+                                oninput="handleSearchInput(event)"
+                                onfocus="handleSearchFocus()"
+                                onkeydown="handleSearchKeydown(event)"
+                            />
+                            <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+                                <i class="fa-solid fa-circle-xmark text-sm"></i>
+                            </button>
+                        </div>
+                        
+                        <button 
+                            type="button"
+                            onclick="executeSearch()" 
+                            class="w-full sm:w-auto px-5 py-3 sm:py-3.5 bg-sanz-600 hover:bg-sanz-700 active:bg-sanz-800 text-white font-bold rounded-xl sm:rounded-2xl text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-lg shrink-0"
+                        >
+                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                            <span>Buscar</span>
+                        </button>
+                    </div>
+
+                    <!-- Lista desplegable de autocompletado en celular -->
+                    <div id="autocompleteDropdown" class="hidden absolute left-0 right-0 mt-1.5 bg-white rounded-xl sm:rounded-2xl shadow-2xl border border-slate-200 max-h-64 overflow-y-auto z-40 text-left divide-y divide-slate-100">
+                        <!-- Generado por JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Sección: ¿Cómo se utiliza? -->
+                <div class="bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-3.5 sm:p-5 border border-white/10 text-left text-xs space-y-2.5 mt-4">
+                    <div class="flex items-center space-x-2 text-amber-300 font-bold uppercase tracking-wider text-[11px] sm:text-xs">
+                        <i class="fa-solid fa-circle-question"></i>
+                        <span>¿Cómo se utiliza este buscador?</span>
+                    </div>
+                    
+                    <ol class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-slate-200 text-[11px] sm:text-xs">
+                        <li class="flex items-center space-x-2 bg-black/25 p-2 rounded-lg border border-white/5">
+                            <span class="w-4 h-4 rounded-full bg-sanz-500 text-white font-bold text-[10px] flex items-center justify-center shrink-0">1</span>
+                            <span>Escribe el <strong>nombre o C.I.</strong></span>
+                        </li>
+                        <li class="flex items-center space-x-2 bg-black/25 p-2 rounded-lg border border-white/5">
+                            <span class="w-4 h-4 rounded-full bg-sanz-500 text-white font-bold text-[10px] flex items-center justify-center shrink-0">2</span>
+                            <span>Presiona <strong>Buscar</strong> o elije de la lista.</span>
+                        </li>
+                        <li class="flex items-center space-x-2 bg-black/25 p-2 rounded-lg border border-white/5">
+                            <span class="w-4 h-4 rounded-full bg-sanz-500 text-white font-bold text-[10px] flex items-center justify-center shrink-0">3</span>
+                            <span>Te llevará directamente a la <strong>ficha</strong>.</span>
+                        </li>
+                    </ol>
+
+                    <!-- Chips de acceso rápido en cel -->
+                    <div class="pt-2 border-t border-white/10 flex flex-wrap items-center gap-1.5">
+                        <span class="text-[10px] sm:text-xs text-slate-300 font-semibold mr-1 flex items-center gap-1">
+                            <i class="fa-solid fa-bolt text-amber-400"></i> Ejemplos:
+                        </span>
+                        <button onclick="quickSearch('RAMIREZ MAESTRE MATHIAS RAFAEL')" class="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white text-[10px] sm:text-xs font-medium border border-white/20 transition">
+                            Mathias R.
+                        </button>
+                        <button onclick="quickSearch('PEREZ SOLIS VALERIA SOFIA')" class="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white text-[10px] sm:text-xs font-medium border border-white/20 transition">
+                            Valeria P.
+                        </button>
+                        <button onclick="quickSearch('MARCANO RICHARDS IGNACIO ALEJANDRO')" class="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white text-[10px] sm:text-xs font-medium border border-white/20 transition">
+                            Ignacio M.
+                        </button>
+                        <button onclick="quickSearch('ZAPATA ANDRADE EMMA LUCIA')" class="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white text-[10px] sm:text-xs font-medium border border-white/20 transition">
+                            Emma Z.
+                        </button>
+                        <button onclick="quickSearch('SUAREZ FERNANDEZ ORIANA ALEXANDRA')" class="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white text-[10px] sm:text-xs font-medium border border-white/20 transition">
+                            Oriana S.
+                        </button>
+                        <button onclick="quickSearch('HERNANDEZ ALAEJO LUIS ALEXANDER')" class="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white text-[10px] sm:text-xs font-medium border border-white/20 transition">
+                            Luis H.
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Estadísticas Rápidas en Móvil (Tarjetas 2x2) -->
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+            <div class="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-slate-200/80 shadow-sm flex items-center space-x-2.5 sm:space-x-3">
+                <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-sanz-50 text-sanz-600 flex items-center justify-center shrink-0 text-sm sm:text-lg">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[9px] sm:text-xs font-medium text-slate-400 uppercase tracking-wide truncate">Total Sección</p>
+                    <h3 class="text-sm sm:text-lg font-bold text-slate-900 truncate">34 Alumnos</h3>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-slate-200/80 shadow-sm flex items-center space-x-2.5 sm:space-x-3">
+                <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 text-sm sm:text-lg">
+                    <i class="fa-solid fa-mars"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[9px] sm:text-xs font-medium text-slate-400 uppercase tracking-wide truncate">Varones (M)</p>
+                    <h3 class="text-sm sm:text-lg font-bold text-slate-900 truncate">22 Varones</h3>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-slate-200/80 shadow-sm flex items-center space-x-2.5 sm:space-x-3">
+                <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center shrink-0 text-sm sm:text-lg">
+                    <i class="fa-solid fa-venus"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[9px] sm:text-xs font-medium text-slate-400 uppercase tracking-wide truncate">Hembras (F)</p>
+                    <h3 class="text-sm sm:text-lg font-bold text-slate-900 truncate">12 Hembras</h3>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-slate-200/80 shadow-sm flex items-center space-x-2.5 sm:space-x-3">
+                <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 text-sm sm:text-lg">
+                    <i class="fa-solid fa-calendar-days"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[9px] sm:text-xs font-medium text-slate-400 uppercase tracking-wide truncate">Año de Nac.</p>
+                    <h3 class="text-sm sm:text-lg font-bold text-slate-900 truncate">2013 - 2014</h3>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ficha Técnica del Estudiante Seleccionado (Sección Destacada para que al buscar baje aquí) -->
+        <section id="detailSection" class="scroll-mt-16 sm:scroll-mt-24">
+            <div id="detailViewContainer" class="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl overflow-hidden transition-all duration-300">
+                <!-- Se llena por JavaScript -->
+            </div>
+        </section>
+
+        <!-- Contenedor del Listado General de los 34 Estudiantes -->
+        <section class="space-y-3 pt-2">
+            <div class="flex items-center justify-between gap-2">
+                <h3 class="font-extrabold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+                    <span>Lista General</span>
+                    <span id="resultsCount" class="px-2 py-0.5 rounded-full text-xs bg-sanz-100 text-sanz-800 font-bold">34</span>
+                </h3>
+                
+                <!-- Filtros por Sexo -->
+                <div class="flex items-center space-x-1 text-xs bg-slate-200/60 p-1 rounded-xl">
+                    <button onclick="setFilterSex('all')" class="sex-filter active px-2.5 py-1 rounded-lg font-bold text-[11px] text-slate-700 transition" data-sex="all">Todos</button>
+                    <button onclick="setFilterSex('M')" class="sex-filter px-2.5 py-1 rounded-lg font-bold text-[11px] text-slate-600 hover:text-slate-900 transition" data-sex="M">M</button>
+                    <button onclick="setFilterSex('F')" class="sex-filter px-2.5 py-1 rounded-lg font-bold text-[11px] text-slate-600 hover:text-slate-900 transition" data-sex="F">F</button>
+                </div>
+            </div>
+
+            <!-- Grilla / Lista de Alumnos optimizada para teléfono -->
+            <div id="studentsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3 max-h-[550px] overflow-y-auto pr-0.5">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Pie de Página Móvil & Desktop Requerido -->
+    <footer class="mt-12 bg-slate-900 text-white border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+                
+                <!-- Identificación del proyecto -->
+                <div class="space-y-2">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sanz-500/20 text-sanz-300 border border-sanz-400/30 text-xs font-semibold">
+                        <i class="fa-solid fa-code"></i> Muestreo de Características
+                    </div>
+                    
+                    <h3 class="text-base sm:text-xl font-black text-amber-400 tracking-tight leading-snug">
+                        Hecho por estudiantes de 2do Año Ciencias y Tecnología B
+                    </h3>
+                    
+                    <p class="text-slate-400 text-xs">
+                        Complejo Educativo "Miguel José Sanz" &bull; Maturín, Estado Monagas
+                    </p>
+                </div>
+
+                <!-- Profesor Orientador -->
+                <div class="text-xs text-slate-400 space-y-1 border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-6">
+                    <p class="font-bold text-slate-200">Año Escolar 2026-2027</p>
+                    <p>Profesor Orientador: <strong class="text-sanz-300">Félix Brito</strong></p>
+                    <p class="text-[10px] text-slate-500">Sección B - 34 Integrantes</p>
+                </div>
+
+            </div>
+            
+            <div class="mt-6 pt-5 border-t border-slate-800/80 text-center text-[11px] text-slate-500">
+                &copy; Complejo Educativo Miguel José Sanz. Todos los derechos reservados.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Lógica de la Aplicación en JavaScript -->
+    <script>
+        // Registro Completo de los 34 Estudiantes (Roster de 2do Cs. y Tecnología B)
+        const RAW_STUDENTS_DATA = [
+            { num: "01", id: "V 34822433", name: "RAMIREZ MAESTRE MATHIAS RAFAEL", height: "1,62", weight: "60", sex: "M", age: 13, birthYear: "2013", shirt: "20", pants: "20", shoes: "42" },
+            { num: "02", id: "V 34823795", name: "PEREZ SOLIS VALERIA SOFIA", height: "1,62", weight: "45", sex: "F", age: 13, birthYear: "2013", shirt: "S", pants: "S", shoes: "37" },
+            { num: "03", id: "V 34795931", name: "MARCANO RICHARDS IGNACIO ALEJANDRO", height: "1,71", weight: "49", sex: "M", age: 13, birthYear: "2013", shirt: "16", pants: "16", shoes: "43" },
+            { num: "04", id: "V 34787375", name: "ZAPATA ANDRADE EMMA LUCIA", height: "1,59", weight: "37", sex: "F", age: 13, birthYear: "2013", shirt: "16", pants: "16", shoes: "37" },
+            { num: "05", id: "V 34798336", name: "GONZALEZ MOSQUEDA NOLIANGEL VALENTINA", height: "1,53", weight: "42", sex: "F", age: 12, birthYear: "2014", shirt: "12", pants: "12", shoes: "37" },
+            { num: "06", id: "V 34798657", name: "ARTEAGA GUAIQUENEPE JAVIER ALEJANDRO", height: "1,49", weight: "41", sex: "M", age: 13, birthYear: "2013", shirt: "14", pants: "14", shoes: "37" },
+            { num: "07", id: "V 3479892", name: "ROA SUAREZ FRANGER SEBASTIAN", height: "1,45", weight: "29", sex: "M", age: 13, birthYear: "2013", shirt: "12", pants: "12", shoes: "34" },
+            { num: "08", id: "V 35005497", name: "ACOSTA MEDINA DAVID ANTONIO", height: "1,55", weight: "54", sex: "M", age: 13, birthYear: "2013", shirt: "16", pants: "16", shoes: "38" },
+            { num: "09", id: "V 35005500", name: "VELASQUEZ MEDINA ELIAS DEL JESUS", height: "1,45", weight: "34", sex: "M", age: 12, birthYear: "2014", shirt: "17", pants: "14", shoes: "37" },
+            { num: "10", id: "V 35006350", name: "GONZALEZ ESPARRAGOZA LUCIANA MARIA", height: "1,59", weight: "66", sex: "F", age: 13, birthYear: "2013", shirt: "14", pants: "16", shoes: "40" },
+            { num: "11", id: "V 35007670", name: "GASCON MARCANO FABIANNA ALESSANDRA", height: "1,55", weight: "65", sex: "F", age: 13, birthYear: "2013", shirt: "20", pants: "34", shoes: "39" },
+            { num: "12", id: "V 35007959", name: "VERACIERTA ARARAT ARGENIS SEBASTIAN", height: "1,92", weight: "49", sex: "M", age: 13, birthYear: "2013", shirt: "S", pants: "S", shoes: "38" },
+            { num: "13", id: "V 35129072", name: "VASQUEZ RIVERA YURIELVIS ISABELLA", height: "1,57", weight: "50", sex: "F", age: 13, birthYear: "2013", shirt: "14", pants: "14", shoes: "39" },
+            { num: "14", id: "V 35184580", name: "EVARISTE RIVAS ANGI MARIA", height: "1,54", weight: "46", sex: "F", age: 13, birthYear: "2013", shirt: "14", pants: "14", shoes: "37" },
+            { num: "15", id: "V 36000125", name: "ROJAS FLORES ENRRIQUE ALEJANDRO", height: "1,58", weight: "42", sex: "M", age: 12, birthYear: "2014", shirt: "16", pants: "16", shoes: "39" },
+            { num: "16", id: "V 36002705", name: "GONZALEZ RODRIGUEZ JUAN PABLO", height: "1,60", weight: "42", sex: "M", age: 13, birthYear: "2013", shirt: "16", pants: "16", shoes: "37" },
+            { num: "17", id: "V 36072340", name: "MARTINEZ MARQUEZ ELIZMER ALEJANDRA", height: "1,53", weight: "42", sex: "F", age: 13, birthYear: "2013", shirt: "S", pants: "14", shoes: "37" },
+            { num: "18", id: "V 36075360", name: "ALMEIDA VILLALBA FERNANDO JOSE", height: "1,65", weight: "76", sex: "M", age: 12, birthYear: "2014", shirt: "16", pants: "28", shoes: "41" },
+            { num: "19", id: "V 36087979", name: "SUAREZ MEDRANO KEYBER JESUS", height: "1,49", weight: "32", sex: "M", age: 13, birthYear: "2013", shirt: "14", pants: "14", shoes: "36" },
+            { num: "20", id: "V 36126251", name: "FARIAS CHACON ISAIAS JOSE", height: "1,40", weight: "35", sex: "M", age: 13, birthYear: "2013", shirt: "12", pants: "14", shoes: "35" },
+            { num: "21", id: "V 36133600", name: "BRITO CHIGUITA JOSE JESUS", height: "1,42", weight: "29", sex: "M", age: 13, birthYear: "2013", shirt: "14", pants: "14", shoes: "38" },
+            { num: "22", id: "V 36144956", name: "MISSEL ACAGUA ANGELICA SAMIRA", height: "1,55", weight: "38", sex: "F", age: 12, birthYear: "2014", shirt: "16", pants: "16", shoes: "36" },
+            { num: "23", id: "V 36271353", name: "CALDERA OLIVEROS JESUS MANUEL", height: "1,62", weight: "50", sex: "M", age: 13, birthYear: "2013", shirt: "28", pants: "28", shoes: "43" },
+            { num: "24", id: "V 36293420", name: "PEÑALVER MAZA CARLOS ALFREDO", height: "1,50", weight: "40", sex: "M", age: 13, birthYear: "2013", shirt: "16", pants: "16", shoes: "39" },
+            { num: "25", id: "V 36375087", name: "SALAZAR CAMPOS NEIMAR KAMILA", height: "1,60", weight: "48", sex: "F", age: 13, birthYear: "2013", shirt: "16", pants: "16", shoes: "39" },
+            { num: "26", id: "V 36480474", name: "PEREZ LARA ISABEL VICTORIA", height: "1,43", weight: "36", sex: "F", age: 13, birthYear: "2013", shirt: "12", pants: "12", shoes: "35" },
+            { num: "27", id: "V 36552818", name: "DIAZ HERNANDEZ AARON ALEJANDRO", height: "1,54", weight: "40", sex: "M", age: 12, birthYear: "2014", shirt: "14", pants: "14", shoes: "38" },
+            { num: "28", id: "V 36639565", name: "GARCIA PEÑA MATHIAS ALEJANDRO", height: "1,68", weight: "60", sex: "M", age: 13, birthYear: "2013", shirt: "14", pants: "32", shoes: "41" },
+            { num: "29", id: "V 36663184", name: "NIEVES GONZALEZ VICTORIA SOFIA", height: "1,50", weight: "38", sex: "F", age: 13, birthYear: "2013", shirt: "18", pants: "14", shoes: "36" },
+            { num: "30", id: "V 36663606", name: "CEBALLO MARCANO CESAR LUIS", height: "1,59", weight: "49", sex: "M", age: 13, birthYear: "2013", shirt: "12", pants: "16", shoes: "42" },
+            { num: "31", id: "V 36881783", name: "SIFONTES SANTOYA JOINER ELIEZER", height: "1,66", weight: "55", sex: "M", age: 12, birthYear: "2014", shirt: "16", pants: "S", shoes: "41" },
+            { num: "32", id: "V 37015618", name: "MILLAN GASCON CRISTIAN ALEJANDRO", height: "1,55", weight: "41", sex: "M", age: 12, birthYear: "2014", shirt: "S", pants: "14", shoes: "37" },
+            { num: "33", id: "V 37055784", name: "SUAREZ FERNANDEZ ORIANA ALEXANDRA", height: "1,55", weight: "60", sex: "F", age: 13, birthYear: "2013", shirt: "16", pants: "16", shoes: "38" },
+            { num: "34", id: "V 37231474", name: "HERNANDEZ ALAEJO LUIS ALEXANDER", height: "1,24", weight: "30", sex: "M", age: 12, birthYear: "2014", shirt: "10", pants: "10", shoes: "37" }
+        ];
+
+        // Estado Global
+        let selectedStudentNum = "01";
+        let currentSearchTerm = "";
+        let currentSexFilter = "all";
+
+        document.addEventListener("DOMContentLoaded", () => {
+            renderStudentsGrid();
+            selectStudent("01", false);
+
+            // Cerrar menú de autocompletado al hacer tap fuera
+            document.addEventListener('click', (e) => {
+                const searchContainer = document.getElementById('searchInput').parentElement.parentElement;
+                const dropdown = document.getElementById('autocompleteDropdown');
+                if (searchContainer && dropdown && !searchContainer.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+        });
+
+        // Filtrar datos
+        function getFilteredStudents() {
+            return RAW_STUDENTS_DATA.filter(s => {
+                const matchesSex = currentSexFilter === 'all' || s.sex === currentSexFilter;
+                const term = currentSearchTerm.toLowerCase().trim();
+                const matchesSearch = !term || 
+                    s.name.toLowerCase().includes(term) || 
+                    s.id.toLowerCase().includes(term) ||
+                    s.num.includes(term);
+                return matchesSex && matchesSearch;
+            });
+        }
+
+        // Renderizar la lista general de tarjetas
+        function renderStudentsGrid() {
+            const filtered = getFilteredStudents();
+            const container = document.getElementById('studentsGrid');
+            document.getElementById('resultsCount').innerText = filtered.length;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full bg-white rounded-xl border border-slate-200 p-6 text-center space-y-2">
+                        <i class="fa-solid fa-user-slash text-2xl text-slate-300"></i>
+                        <h4 class="font-bold text-slate-800 text-xs sm:text-sm">No se encontraron estudiantes</h4>
+                        <p class="text-[11px] text-slate-500">Intenta escribir otro nombre o número de cédula.</p>
+                        <button onclick="clearSearch()" class="text-xs text-sanz-600 font-bold hover:underline">Limpiar Búsqueda</button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(s => {
+                const isSelected = s.num === selectedStudentNum;
+                const avatarIcon = s.sex === 'M' ? 'fa-user-astronaut' : 'fa-user';
+                const avatarBg = s.sex === 'M' ? 'bg-blue-100 text-blue-600' : 'bg-pink-100 text-pink-600';
+
+                return `
+                    <div 
+                        onclick="selectStudent('${s.num}', true)"
+                        class="bg-white rounded-xl sm:rounded-2xl p-3 border transition-all duration-200 cursor-pointer flex items-center justify-between hover:shadow-md ${
+                            isSelected 
+                                ? 'border-sanz-500 ring-2 ring-sanz-500/30 bg-sanz-50/40 shadow-sm' 
+                                : 'border-slate-200 hover:border-slate-300'
+                        }"
+                    >
+                        <div class="flex items-center space-x-2.5 min-w-0">
+                            <!-- N° de lista -->
+                            <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 font-bold text-[11px] flex items-center justify-center shrink-0 border border-slate-200 font-mono">
+                                #${s.num}
+                            </div>
+
+                            <!-- Nombre y Cédula -->
+                            <div class="min-w-0">
+                                <h4 class="font-bold text-slate-900 text-xs truncate leading-snug">${s.name}</h4>
+                                <div class="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium">
+                                    <span class="font-mono text-sanz-700 font-bold">${s.id}</span>
+                                    <span>&bull;</span>
+                                    <span>${s.age} años (${s.sex})</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Icono -->
+                        <div class="shrink-0 ml-1.5">
+                            <span class="w-6 h-6 rounded-full ${avatarBg} flex items-center justify-center text-[11px]">
+                                <i class="fa-solid ${avatarIcon}"></i>
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Mostrar Ficha de Características Detallada y bajar suavemente
+        function selectStudent(num, autoScroll = true) {
+            selectedStudentNum = num;
+            renderStudentsGrid();
+
+            const student = RAW_STUDENTS_DATA.find(s => s.num === num);
+            const container = document.getElementById('detailViewContainer');
+
+            if (!student || !container) return;
+
+            const isMale = student.sex === 'M';
+            const genderBadge = isMale 
+                ? '<span class="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-200 border border-blue-400/30 text-[10px] sm:text-xs font-bold"><i class="fa-solid fa-mars mr-1"></i> Masculino</span>'
+                : '<span class="px-2.5 py-0.5 rounded-full bg-pink-500/20 text-pink-200 border border-pink-400/30 text-[10px] sm:text-xs font-bold"><i class="fa-solid fa-venus mr-1"></i> Femenino</span>';
+
+            container.innerHTML = `
+                <!-- Cabecera de la Ficha Técnica -->
+                <div class="bg-gradient-to-r from-slate-900 via-sanz-900 to-indigo-950 text-white p-4 sm:p-7 relative">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <span class="font-mono bg-white/10 text-white font-bold px-2.5 py-0.5 rounded-lg text-[10px] sm:text-xs border border-white/15">
+                            LISTA N° #${student.num}
+                        </span>
+                        ${genderBadge}
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <h2 class="text-lg sm:text-2xl font-black tracking-tight leading-snug">${student.name}</h2>
+                        <div class="flex flex-wrap items-center gap-2 text-xs text-sanz-200">
+                            <span class="font-mono bg-black/30 px-2 py-0.5 rounded border border-white/10 text-[11px] font-bold">
+                                <i class="fa-solid fa-id-card text-amber-400 mr-1"></i> C.I. ${student.id}
+                            </span>
+                            <span class="bg-amber-400/20 text-amber-200 font-bold px-2 py-0.5 rounded border border-amber-400/30 text-[11px]">
+                                <i class="fa-solid fa-calendar mr-1"></i> Nació: ${student.birthYear}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalle de Características Físicas y Uniforme -->
+                <div class="p-4 sm:p-6 space-y-5">
+
+                    <!-- Ficha Biográfica Básica -->
+                    <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                        <div class="bg-slate-50 rounded-xl p-2.5 sm:p-3.5 border border-slate-200/80 text-center">
+                            <i class="fa-solid fa-cake-candles text-sanz-500 text-xs sm:text-base mb-0.5"></i>
+                            <span class="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase">Edad</span>
+                            <span class="text-xs sm:text-base font-black text-slate-800">${student.age} años</span>
+                        </div>
+
+                        <div class="bg-amber-50/80 rounded-xl p-2.5 sm:p-3.5 border border-amber-200/80 text-center">
+                            <i class="fa-solid fa-calendar-day text-amber-600 text-xs sm:text-base mb-0.5"></i>
+                            <span class="text-[9px] sm:text-[10px] text-amber-700 font-bold block uppercase">Nacimiento</span>
+                            <span class="text-xs sm:text-base font-black text-amber-900">${student.birthYear}</span>
+                        </div>
+
+                        <div class="bg-slate-50 rounded-xl p-2.5 sm:p-3.5 border border-slate-200/80 text-center">
+                            <i class="fa-solid ${isMale ? 'fa-mars text-blue-500' : 'fa-venus text-pink-500'} text-xs sm:text-base mb-0.5"></i>
+                            <span class="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase">Sexo</span>
+                            <span class="text-xs sm:text-base font-black text-slate-800">${student.sex}</span>
+                        </div>
+                    </div>
+
+                    <!-- Medidas Antropométricas -->
+                    <div>
+                        <h3 class="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center">
+                            <i class="fa-solid fa-ruler-combined text-sanz-600 mr-1.5"></i> Medidas Antropométricas
+                        </h3>
+                        <div class="grid grid-cols-2 gap-2.5 sm:gap-4">
+                            <!-- Estatura -->
+                            <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex items-center space-x-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">
+                                    <i class="fa-solid fa-arrows-up-down"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <span class="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase block">Estatura</span>
+                                    <span class="text-sm sm:text-lg font-extrabold text-slate-900">${student.height} <span class="text-[10px] text-slate-500 font-normal">m</span></span>
+                                </div>
+                            </div>
+                            <!-- Peso -->
+                            <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex items-center space-x-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
+                                    <i class="fa-solid fa-weight-scale"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <span class="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase block">Peso</span>
+                                    <span class="text-sm sm:text-lg font-extrabold text-slate-900">${student.weight} <span class="text-[10px] text-slate-500 font-normal">kg</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tallas de Uniforme Escolar -->
+                    <div>
+                        <h3 class="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center">
+                            <i class="fa-solid fa-shirt text-sanz-600 mr-1.5"></i> Tallas de Uniforme y Calzado
+                        </h3>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="bg-slate-50 rounded-xl p-2.5 border border-slate-200 text-center">
+                                <span class="text-[9px] text-slate-400 font-bold uppercase block">Camisa</span>
+                                <span class="text-sm sm:text-base font-extrabold text-slate-800">${student.shirt}</span>
+                            </div>
+
+                            <div class="bg-slate-50 rounded-xl p-2.5 border border-slate-200 text-center">
+                                <span class="text-[9px] text-slate-400 font-bold uppercase block">Pantalón</span>
+                                <span class="text-sm sm:text-base font-extrabold text-slate-800">${student.pants}</span>
+                            </div>
+
+                            <div class="bg-slate-50 rounded-xl p-2.5 border border-slate-200 text-center">
+                                <span class="text-[9px] text-slate-400 font-bold uppercase block">Calzado</span>
+                                <span class="text-sm sm:text-base font-extrabold text-slate-800">${student.shoes}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-[11px] text-slate-400">Año Escolar 2026-2027</span>
+                        <button onclick="copyStudentDetails('${student.num}')" class="text-sanz-600 hover:text-sanz-700 font-bold flex items-center gap-1 bg-sanz-50 px-3 py-1.5 rounded-lg border border-sanz-200/80 active:scale-95 transition">
+                            <i class="fa-solid fa-copy text-xs"></i> Copiar Ficha
+                        </button>
+                    </div>
+
+                </div>
+            `;
+
+            if (autoScroll) {
+                const section = document.getElementById('detailSection');
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                container.classList.add('highlight-card');
+                setTimeout(() => {
+                    container.classList.remove('highlight-card');
+                }, 1300);
+            }
+        }
+
+        // Búsqueda y Manejadores
+        function handleSearchInput(e) {
+            currentSearchTerm = e.target.value;
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (currentSearchTerm.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            updateAutocompleteDropdown();
+            renderStudentsGrid();
+        }
+
+        function handleSearchFocus() {
+            if (currentSearchTerm.trim().length > 0) {
+                updateAutocompleteDropdown();
+            }
+        }
+
+        function handleSearchKeydown(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                executeSearch();
+            }
+        }
+
+        function executeSearch() {
+            document.getElementById('autocompleteDropdown').classList.add('hidden');
+            const filtered = getFilteredStudents();
+            if (filtered.length > 0) {
+                selectStudent(filtered[0].num, true);
+                showToast(`Mostrando expediente de: ${filtered[0].name.split(' ')[0]}`);
+            } else {
+                showToast('No se encontró ningún alumno con esos datos.');
+            }
+        }
+
+        function quickSearch(fullName) {
+            document.getElementById('searchInput').value = fullName;
+            currentSearchTerm = fullName;
+            document.getElementById('clearSearchBtn').classList.remove('hidden');
+            document.getElementById('autocompleteDropdown').classList.add('hidden');
+            renderStudentsGrid();
+            
+            const match = RAW_STUDENTS_DATA.find(s => s.name === fullName);
+            if (match) {
+                selectStudent(match.num, true);
+                showToast(`Búsqueda rápida: ${match.name.split(' ')[0]}`);
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            currentSearchTerm = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            document.getElementById('autocompleteDropdown').classList.add('hidden');
+            renderStudentsGrid();
+        }
+
+        function selectStudentFromAutocomplete(num) {
+            document.getElementById('autocompleteDropdown').classList.add('hidden');
+            selectStudent(num, true);
+        }
+
+        function updateAutocompleteDropdown() {
+            const dropdown = document.getElementById('autocompleteDropdown');
+            if (!currentSearchTerm.trim()) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+
+            const matches = getFilteredStudents().slice(0, 5);
+
+            if (matches.length === 0) {
+                dropdown.innerHTML = `
+                    <div class="px-4 py-3 text-xs text-slate-500 italic">
+                        Sin coincidencias para "${currentSearchTerm}"
+                    </div>
+                `;
+            } else {
+                dropdown.innerHTML = matches.map(s => `
+                    <div onclick="selectStudentFromAutocomplete('${s.num}')" class="px-3.5 py-2.5 hover:bg-sanz-50 cursor-pointer transition flex items-center justify-between">
+                        <div class="min-w-0 pr-2">
+                            <p class="text-xs font-bold text-slate-900 truncate">${s.name}</p>
+                            <p class="text-[10px] text-slate-500 font-mono">C.I. ${s.id} &bull; ${s.age} años &bull; Nació ${s.birthYear}</p>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${s.sex === 'M' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}">
+                            ${s.sex}
+                        </span>
+                    </div>
+                `).join('');
+            }
+
+            dropdown.classList.remove('hidden');
+        }
+
+        function setFilterSex(sex) {
+            currentSexFilter = sex;
+            document.querySelectorAll('.sex-filter').forEach(btn => {
+                if (btn.dataset.sex === sex) {
+                    btn.classList.add('bg-white', 'shadow-sm', 'text-sanz-700', 'font-extrabold');
+                    btn.classList.remove('text-slate-600');
+                } else {
+                    btn.classList.remove('bg-white', 'shadow-sm', 'text-sanz-700', 'font-extrabold');
+                    btn.classList.add('text-slate-600');
+                }
+            });
+            renderStudentsGrid();
+        }
+
+        // Copiar Expediente al portapapeles sin alert()
+        function copyStudentDetails(num) {
+            const s = RAW_STUDENTS_DATA.find(item => item.num === num);
+            if (!s) return;
+            const summary = `COMPLEJO EDUCATIVO "MIGUEL JOSÉ SANZ"
+2do Año Cs. y Tecnología B - Prof. Félix Brito
+------------------------------------------------
+N° Lista: #${s.num}
+Nombre: ${s.name}
+Cédula: ${s.id}
+Edad: ${s.age} años | Sexo: ${s.sex} | Nacimiento: ${s.birthYear}
+Estatura: ${s.height} m | Peso: ${s.weight} kg
+Camisa: ${s.shirt} | Pantalón: ${s.pants} | Calzado: ${s.shoes}`;
+
+            const dummy = document.createElement("textarea");
+            document.body.appendChild(dummy);
+            dummy.value = summary;
+            dummy.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+
+            showToast(`¡Expediente de ${s.name.split(' ')[0]} copiado!`);
+        }
+
+        // Sistema de Notificaciones Toast
+        let toastTimeout;
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            const toastMsg = document.getElementById('toastMessage');
+            toastMsg.innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                hideToast();
+            }, 3000);
+        }
+
+        function hideToast() {
+            const toast = document.getElementById('toastNotification');
+            toast.classList.add('translate-y-20', 'opacity-0');
+            toast.classList.remove('translate-y-0', 'opacity-100');
+        }
+    </script>
+</body>
+</html>
